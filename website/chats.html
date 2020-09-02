@@ -10,13 +10,20 @@
     <ul id="chatList"></ul>
 </body>
 <script src="js/jquery.min.js"></script>
+<script src="js/config.js"></script>
 <script type="application/javascript">
     let username;
     window.onload = () => {
         username = new URLSearchParams(window.location.search).get("username");
         document.getElementById("username").innerHTML = username;
         if (username === "Hans") {
-            $.get("testData/conversations.json").done(data => {
+            $.get({
+                method: "GET",
+                url: serverUrl + "/chats/username/" + username,
+                headers: {
+                    Accept: "application/json"
+                }
+            }).done(data => {
                 let chatList = document.getElementById("chatList");
                 data.forEach(chat => {
                     chatList.innerHTML += '<li><a href="chat.html?username=' + username + '&chatId=' + chat.id + '">' + chat.partner + '</a></li>';

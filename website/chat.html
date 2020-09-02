@@ -15,6 +15,10 @@
         .messageBox {
             border: 1px solid black;
         }
+        .messageBox * {
+            margin: 0;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
@@ -23,6 +27,7 @@
     <div id="messages"></div>
 </body>
 <script src="js/jquery.min.js"></script>
+<script src="js/config.js"></script>
 <script type="application/javascript">
     let username;
     let chatId;
@@ -34,7 +39,13 @@
         document.getElementById("chatId").innerHTML = chatId;
         if (username === "Hans" && chatId === "1") {
             console.log("Here");
-            $.get("testData/messages.json").done(data => {
+            $.ajax({
+                type: "GET",
+                url: serverUrl + "/messages/chatId/" + chatId,
+                headers: {
+                    Accept: "application/json; charset=utf-8"
+                }
+            }).done(data => {
                 let messageContainer = document.getElementById("messages");
                 console.log(data);
                 data.forEach(message => {
