@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        .ownMessage {
+            float: right;
+            clear: both;
+        }
+        .partnerMessage {
+            float: left;
+            clear: both;
+        }
+        .messageBox {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Chat Example</h1>
+    <h2>Chat with id <span id="chatId"></span> from <span id="username"></span></h2>
+    <div id="messages"></div>
+</body>
+<script src="js/jquery.min.js"></script>
+<script type="application/javascript">
+    let username;
+    let chatId;
+    window.onload = () => {
+        let urlSearchParams = new URLSearchParams(window.location.search);
+        username = urlSearchParams.get("username");
+        chatId = urlSearchParams.get("chatId")
+        document.getElementById("username").innerHTML = username;
+        document.getElementById("chatId").innerHTML = chatId;
+        if (username === "Hans" && chatId === "1") {
+            console.log("Here");
+            $.get("testData/messages.json").done(data => {
+                let messageContainer = document.getElementById("messages");
+                console.log(data);
+                data.forEach(message => {
+                    let messageDiv = '<div class="messageBox ';
+                    let sender;
+                    if (message.sender === username) {
+                        messageDiv += 'ownMessage">';
+                        sender = "You";
+                    } else {
+                        messageDiv += 'partnerMessage">';
+                        sender = message.sender;
+                    }
+                    let sendDate = new Date(0);
+                    sendDate.setUTCMilliseconds(message.timestamp);
+                    messageDiv += "<h4>" + sender + " at " + sendDate + "</h4>";
+                    messageDiv += "<p>" + message.message + "</p>";
+                    messageDiv += "</div>"
+                    messageContainer.innerHTML += messageDiv;
+                })
+            })
+        }
+    }
+</script>
+</html>

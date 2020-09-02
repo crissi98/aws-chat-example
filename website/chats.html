@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Simple Chat Example</h1>
+    <h2>List of chats from <span id="username"></span></h2>
+    <ul id="chatList"></ul>
+</body>
+<script src="js/jquery.min.js"></script>
+<script type="application/javascript">
+    let username;
+    window.onload = () => {
+        username = new URLSearchParams(window.location.search).get("username");
+        document.getElementById("username").innerHTML = username;
+        if (username === "Hans") {
+            $.get("testData/conversations.json").done(data => {
+                let chatList = document.getElementById("chatList");
+                data.forEach(chat => {
+                    chatList.innerHTML += '<li><a href="chat.html?username=' + username + '&chatId=' + chat.id + '">' + chat.partner + '</a></li>';
+                })
+            })
+        }
+    }
+</script>
+</html>

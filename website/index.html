@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Simple Chat Example</h1>
+    <h2>Log In</h2>
+    <p>
+        Username: <input id="username" type="text">
+    </p>
+    <button onclick="signIn()">Sign In</button>
+</body>
+<script src="js/jquery.min.js"></script>
+<script type="application/javascript">
+    function signIn() {
+        let username = $("#username").val();
+        window.location.href = "chats.html?username=" + username;
+    }
+</script>
+</html>
