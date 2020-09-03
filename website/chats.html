@@ -16,20 +16,18 @@
     window.onload = () => {
         username = new URLSearchParams(window.location.search).get("username");
         document.getElementById("username").innerHTML = username;
-        if (username === "Hans") {
-            $.get({
-                method: "GET",
-                url: serverUrl + "/chats/username/" + username,
-                headers: {
-                    Accept: "application/json"
-                }
-            }).done(data => {
-                let chatList = document.getElementById("chatList");
-                data.forEach(chat => {
-                    chatList.innerHTML += '<li><a href="chat.html?username=' + username + '&chatId=' + chat.id + '">' + chat.partner + '</a></li>';
-                })
+        $.get({
+            method: "GET",
+            url: serverUrl + "/chats/username/" + username,
+            headers: {
+                Accept: "application/json"
+            }
+        }).done(data => {
+            let chatList = document.getElementById("chatList");
+            data.forEach(chat => {
+                chatList.innerHTML += '<li><a href="chat.html?username=' + username + '&chatId=' + chat.id + '">' + chat.partner + '</a></li>';
             })
-        }
+        })
     }
 </script>
 </html>

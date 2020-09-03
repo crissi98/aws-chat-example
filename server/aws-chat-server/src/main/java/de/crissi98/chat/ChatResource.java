@@ -6,9 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -34,8 +32,8 @@ public class ChatResource {
     @GET
     @Path("/add")
     public void addTestData() {
-        service.addItems();
-        LOG.info("Test-items added");
+        service.addChatItems();
+        LOG.info("Test-items added for chats");
     }
 
 
