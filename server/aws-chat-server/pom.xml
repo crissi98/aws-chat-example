@@ -57,6 +57,12 @@
             <artifactId>rest-assured</artifactId>
             <scope>test</scope>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.amazonaws</groupId>-->
+<!--            <artifactId>aws-java-sdk-dynamodb</artifactId>-->
+<!--            <version>1.11.420</version>-->
+<!--        </dependency>-->
     </dependencies>
     <build>
         <plugins>

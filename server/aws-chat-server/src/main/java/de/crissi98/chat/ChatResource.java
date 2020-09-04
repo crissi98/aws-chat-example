@@ -1,17 +1,20 @@
 package de.crissi98.chat;
 
 import de.crissi98.chat.dynamo.DatabaseService;
+import de.crissi98.chat.model.NewChatRequest;
 import de.crissi98.chat.model.UserChat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.Random;
 
 @Path("/chats")
 @Produces(MediaType.APPLICATION_JSON)
@@ -21,6 +24,8 @@ public class ChatResource {
 
     @Inject
     DatabaseService service;
+
+    Random random = new Random();
 
     @GET
     @Path("/username/{user}")
@@ -34,6 +39,14 @@ public class ChatResource {
     public void addTestData() {
         service.addChatItems();
         LOG.info("Test-items added for chats");
+    }
+
+    @POST
+    @Path("/newChat")
+    public void newChat(NewChatRequest chatRequest) {
+        int generatedChatId = random.nextInt();
+        LOG.info("Adding new chat {} with id {}", chatRequest, generatedChatId);
+        service.createNewChat(chatRequest, generatedChatId);
     }
 
 

@@ -8,6 +8,13 @@
     <h1>Simple Chat Example</h1>
     <h2>List of chats from <span id="username"></span></h2>
     <ul id="chatList"></ul>
+    <h2>Start new chat</h2>
+    <p>
+        Chat partner:
+        <input id="chatPartner" type="text">
+        <button onclick="addChat()">Start chat</button>
+    </p>
+
 </body>
 <script src="js/jquery.min.js"></script>
 <script src="js/config.js"></script>
@@ -16,18 +23,40 @@
     window.onload = () => {
         username = new URLSearchParams(window.location.search).get("username");
         document.getElementById("username").innerHTML = username;
+        refreshChats();
+    }
+
+    function refreshChats() {
         $.get({
-            method: "GET",
             url: serverUrl + "/chats/username/" + username,
             headers: {
                 Accept: "application/json"
             }
         }).done(data => {
             let chatList = document.getElementById("chatList");
+            chatList.innerHTML = "";
             data.forEach(chat => {
                 chatList.innerHTML += '<li><a href="chat.html?username=' + username + '&chatId=' + chat.id + '">' + chat.partner + '</a></li>';
             })
-        })
+        });
+    }
+
+    function addChat() {
+        let chatPartner = $("#chatPartner").val();
+        let newChat = {
+            "member1": username,
+            "member2": chatPartner
+        };
+        $.post({
+            url: serverUrl + "/chats/newChat",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+            },
+            data: JSON.stringify(newChat)
+        }).done(_ =>
+            refreshChats()
+        );
     }
 </script>
 </html>

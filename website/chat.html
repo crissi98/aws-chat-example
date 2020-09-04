@@ -22,12 +22,23 @@
             margin: 0;
             padding: 0;
         }
+
+        #sendMessage {
+            clear: both;
+        }
+
     </style>
 </head>
 <body>
     <h1>Simple Chat Example</h1>
     <h2>Chat with id <span id="chatId"></span> from <span id="username"></span></h2>
+    <button onclick="refreshMessages()">Refresh</button>
     <div id="messages"></div>
+    <p id="sendMessage">
+        Write message:
+        <input id="message" type="text">
+        <button onclick="sendMessage()">Start chat</button>
+    </p>
 </body>
 <script src="js/jquery.min.js"></script>
 <script src="js/config.js"></script>
@@ -40,16 +51,18 @@
         chatId = urlSearchParams.get("chatId")
         document.getElementById("username").innerHTML = username;
         document.getElementById("chatId").innerHTML = chatId;
-        console.log("Here");
-        $.ajax({
-            type: "GET",
+        refreshMessages();
+    }
+
+    function refreshMessages() {
+        $.get({
             url: serverUrl + "/messages/chatId/" + chatId,
             headers: {
                 Accept: "application/json; charset=utf-8"
             }
         }).done(data => {
             let messageContainer = document.getElementById("messages");
-            console.log(data);
+            messageContainer.innerHTML = "";
             data.forEach(message => {
                 let messageDiv = '<div class="messageBox ';
                 let sender;
@@ -68,6 +81,25 @@
                 messageContainer.innerHTML += messageDiv;
             })
         })
+    }
+
+    function sendMessage() {
+        let messageText = $("#message").val();
+        let message = {
+            chatId: chatId,
+            sender: username,
+            message: messageText
+        }
+        $.post({
+            url: serverUrl + "/messages/sendMessage",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+            },
+            data: JSON.stringify(message)
+        }).done(_ =>
+            refreshMessages()
+        );
     }
 </script>
 </html>

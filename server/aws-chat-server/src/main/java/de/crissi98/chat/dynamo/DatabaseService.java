@@ -1,12 +1,15 @@
 package de.crissi98.chat.dynamo;
 
 import de.crissi98.chat.model.Message;
+import de.crissi98.chat.model.NewChatRequest;
+import de.crissi98.chat.model.NewMessageRequest;
 import de.crissi98.chat.model.UserChat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.PutRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -50,52 +53,26 @@ public class DatabaseService {
         return processMessageResults(resultMapMessages);
     }
 
+    public void createNewChat(NewChatRequest chatRequest, int generatedChatId) {
+        client.putItem(putChat(chatRequest.getMember1(), chatRequest.getMember2(), generatedChatId));
+    }
+
+    public void addMessageToChat(NewMessageRequest messageRequest, long generatedTimestamp) {
+        client.putItem(putMessage(messageRequest.getChatId(), generatedTimestamp, messageRequest.getSender(),
+                messageRequest.getMessage()));
+    }
+
     public void addMessageItems() {
         LOG.info("Adding data for chats");
-        PutItemRequest put = PutItemRequest.builder()
-                .tableName(MESSAGE_TABLE)
-                .item(Map.of(MESSAGE_KEY, AttributeValue.builder().s("Moin Meister").build(),
-                        TIMESTAMP_KEY, AttributeValue.builder().n(String.valueOf(System.currentTimeMillis() - 10_000L)).build(),
-                        CHAT_ID_KEY, AttributeValue.builder().n("1").build(),
-                        SENDER_KEY, AttributeValue.builder().s("Dieter").build()))
-                .build();
-        client.putItem(put);
-
-        put = PutItemRequest.builder()
-                .tableName(MESSAGE_TABLE)
-                .item(Map.of(MESSAGE_KEY, AttributeValue.builder().s("Servus").build(),
-                        TIMESTAMP_KEY, AttributeValue.builder().n(String.valueOf(System.currentTimeMillis() - 10_000L)).build(),
-                        CHAT_ID_KEY, AttributeValue.builder().n("1").build(),
-                        SENDER_KEY, AttributeValue.builder().s("Hans").build()))
-                .build();
-        client.putItem(put);
+        client.putItem(putMessage(1, System.currentTimeMillis() - 10_000L, "Dieter", "Moin Meister"));
+        client.putItem(putMessage(1, System.currentTimeMillis(), "Hans", "Servus"));
     }
 
     public void addChatItems() {
-        LOG.info("Adding data for messages");
-        PutItemRequest put = PutItemRequest.builder()
-                .tableName(CHATS_TABLE)
-                .item(Map.of(MEMBER_1_KEY, AttributeValue.builder().s("Hans").build(),
-                        MEMBER_2_KEY, AttributeValue.builder().s("Dieter").build(),
-                        CHAT_ID_KEY, AttributeValue.builder().n("1").build()))
-                .build();
-        client.putItem(put);
-
-        put = PutItemRequest.builder()
-                .tableName(CHATS_TABLE)
-                .item(Map.of(MEMBER_1_KEY, AttributeValue.builder().s("Hans").build(),
-                        MEMBER_2_KEY, AttributeValue.builder().s("Peter").build(),
-                        CHAT_ID_KEY, AttributeValue.builder().n("2").build()))
-                .build();
-        client.putItem(put);
-
-        put = PutItemRequest.builder()
-                .tableName(CHATS_TABLE)
-                .item(Map.of(MEMBER_1_KEY, AttributeValue.builder().s("Dieter").build(),
-                        MEMBER_2_KEY, AttributeValue.builder().s("Peter").build(),
-                        CHAT_ID_KEY, AttributeValue.builder().n("3").build()))
-                .build();
-        client.putItem(put);
+        LOG.info("Adding data for chats");
+        client.putItem(putChat("Hans", "Dieter", 1));
+        client.putItem(putChat("Hans", "Peter", 2));
+        client.putItem(putChat("Dieter", "Peter", 3));
     }
 
     private QueryRequest queryUsername(String username, String keyName) {
@@ -114,6 +91,26 @@ public class DatabaseService {
                 .tableName(MESSAGE_TABLE)
                 .keyConditionExpression(CHAT_ID_KEY + "= :cId")
                 .expressionAttributeValues(Map.of(":cId", AttributeValue.builder().n(String.valueOf(chatId)).build()))
+                .build();
+    }
+
+    private PutItemRequest putChat(String member1, String member2, int chatId) {
+        return PutItemRequest.builder()
+                .tableName(CHATS_TABLE)
+                .item(Map.of(MEMBER_1_KEY, AttributeValue.builder().s(member1).build(),
+                        MEMBER_2_KEY, AttributeValue.builder().s(member2).build(),
+                        CHAT_ID_KEY, AttributeValue.builder().n(String.valueOf(chatId)).build()))
+                .build();
+    }
+
+    private PutItemRequest putMessage(int chatId, long timestamp, String sender, String message) {
+        return PutItemRequest.builder()
+                .tableName(MESSAGE_TABLE)
+                .item(Map.of(
+                        CHAT_ID_KEY, AttributeValue.builder().n(String.valueOf(chatId)).build(),
+                        TIMESTAMP_KEY, AttributeValue.builder().n(String.valueOf(timestamp)).build(),
+                        SENDER_KEY, AttributeValue.builder().s(sender).build(),
+                        MESSAGE_KEY, AttributeValue.builder().s(message).build()))
                 .build();
     }
 
@@ -137,4 +134,6 @@ public class DatabaseService {
                 })
                 .collect(Collectors.toList());
     }
+
+
 }
