@@ -17,4 +17,4 @@ jobs:
         env:
           docker_user: ${{ secrets.DOCKER_USERNAME }}
           docker_password: ${{ secrets.DOCKER_PASSWORD }}
-        run: mvn -B package --file server/aws-chat-server/pom.xml -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.name=aws-chat-server-java
+        run: mvn -B package --file server/aws-chat-server/pom.xml -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.name=aws-chat-server-java -Ddocker.user=${env.docker_user} -Ddocker.password=${env.docker_password}
