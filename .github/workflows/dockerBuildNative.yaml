@@ -15,6 +15,6 @@ jobs:
           java-version: 11
       - name: Push native-image to docker
         env:
-          docker_user: ${{ secrets.DOCKER_USERNAME }}
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
-        run: mvn -B package --file server/aws-chat-server/pom.xml -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.name=aws-chat-server-native -Ddocker.user=${env.docker_user} -Ddocker.password=${env.docker_password}
+          dockerUser: ${{ secrets.DOCKER_USERNAME }}
+          dockerPassword: ${{ secrets.DOCKER_PASSWORD }}
+        run: mvn -B package --file server/aws-chat-server/pom.xml -Pnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true -Dquarkus.container-image.name=aws-chat-server-native -Ddocker.user=${env.dockerUser} -Ddocker.password=${env.dockerPassword}
