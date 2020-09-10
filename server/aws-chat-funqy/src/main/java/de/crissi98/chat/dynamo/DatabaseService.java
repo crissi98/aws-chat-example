@@ -40,7 +40,9 @@ public class DatabaseService {
     DynamoDbClient client;
 
     public List<UserChat> getChatsForUser(String username) {
+        LOG.info("Query 1");
         var resultMapMember1 = client.query(queryUsername(username, MEMBER_1_KEY)).items();
+        LOG.info("Query 2");
         var resultMapMember2 = client.query(queryUsername(username, MEMBER_2_KEY)).items();
         List<UserChat> result = processChatResults(resultMapMember1, MEMBER_2_KEY);
         result.addAll(processChatResults(resultMapMember2, MEMBER_1_KEY));

@@ -1,0 +1,11 @@
+[
+  {
+    "name" : "software.amazon.awssdk.enhanced.dynamodb.mapper.BeanTableSchema",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true,
+    "allDeclaredFields" : true,
+    "allPublicFields" : true
+  }
+]

@@ -1,20 +1,21 @@
 package de.crissi98.chat.dynamo;
 
-import de.crissi98.chat.model.Message;
-import de.crissi98.chat.model.NewChatRequest;
-import de.crissi98.chat.model.NewMessageRequest;
-import de.crissi98.chat.model.UserChat;
+import de.crissi98.chat.chats.send.NewChatRequest;
+import de.crissi98.chat.messages.send.NewMessageRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -22,117 +23,85 @@ import java.util.stream.Collectors;
 public class DatabaseService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DatabaseService.class);
+    private static final DynamoDbEnhancedClient client = DynamoDbEnhancedClient.create();
 
-    public static final String CHATS_TABLE = "Chats";
-    public static final String CHATS_REVERSED_INDEX = "ChatsReversedMembers";
+    DynamoDbTable<Chat> chatTable;
+    DynamoDbIndex<Chat> chatIndexReversed;
+    DynamoDbTable<Message> messageTable;
 
-    public static final String MEMBER_1_KEY = "member1";
-    public static final String MEMBER_2_KEY = "member2";
-    public static final String CHAT_ID_KEY = "chatId";
+    @PostConstruct
+    void init() {
+        LOG.info("Start init");
+        chatTable = client.table(Chat.TABLE_NAME, TableSchema.fromBean(Chat.class));
+        chatIndexReversed = chatTable.index(Chat.REVERSED_INDEX_NAME);
+        messageTable = client.table(Message.TABLE_NAME, TableSchema.fromBean(Message.class));
+        LOG.info("Finished init");
+    }
 
-    public static final String MESSAGE_TABLE = "ChatMessages";
-
-    public static final String TIMESTAMP_KEY = "timestamp";
-    public static final String MESSAGE_KEY = "message";
-    public static final String SENDER_KEY = "sender";
-
-    @Inject
-    DynamoDbClient client;
-
-    public List<UserChat> getChatsForUser(String username) {
-        var resultMapMember1 = client.query(queryUsername(username, MEMBER_1_KEY)).items();
-        var resultMapMember2 = client.query(queryUsername(username, MEMBER_2_KEY)).items();
-        List<UserChat> result = processChatResults(resultMapMember1, MEMBER_2_KEY);
-        result.addAll(processChatResults(resultMapMember2, MEMBER_1_KEY));
+    public List<Chat> getChatsForUser(String username) {
+        LOG.info("Querying chats for {}", username);
+        List<Chat> chats1 = chatTable.query(queryUsername(username))
+                .items()
+                .stream()
+                .collect(Collectors.toList());
+        List<Chat> chats2 = chatIndexReversed.query(queryUsername(username))
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .collect(Collectors.toList());
+        List<Chat> result = new ArrayList<>(chats1);
+        result.addAll(chats2);
+        LOG.info("{} chats found", result.size());
         return result;
     }
 
     public List<Message> getMessagesForChatId(int chatId) {
-        var resultMapMessages = client.query(queryMessages(chatId)).items();
-        return processMessageResults(resultMapMessages);
+        LOG.info("Querying messages for chat {}", chatId);
+        List<Message> result = messageTable.query(queryMessages(chatId))
+                .items()
+                .stream()
+                .collect(Collectors.toList());
+        LOG.info("{} messages found", result.size());
+        return result;
     }
 
     public void createNewChat(NewChatRequest chatRequest, int generatedChatId) {
-        client.putItem(putChat(chatRequest.getMember1(), chatRequest.getMember2(), generatedChatId));
+        Chat chat = new Chat(chatRequest.getMember1(), chatRequest.getMember2(), generatedChatId);
+        chatTable.putItem(chat);
     }
 
     public void addMessageToChat(NewMessageRequest messageRequest, long generatedTimestamp) {
-        client.putItem(putMessage(messageRequest.getChatId(), generatedTimestamp, messageRequest.getSender(),
-                messageRequest.getMessage()));
+        Message message = new Message(messageRequest.getChatId(), generatedTimestamp, messageRequest.getMessage(),
+                messageRequest.getSender());
+        messageTable.putItem(message);
     }
 
     public void addMessageItems() {
         LOG.info("Adding data for chats");
-        client.putItem(putMessage(1, System.currentTimeMillis() - 10_000L, "Dieter", "Moin Meister"));
-        client.putItem(putMessage(1, System.currentTimeMillis(), "Hans", "Servus"));
+        messageTable.putItem(new Message(1, System.currentTimeMillis() - 10_000L, "Dieter", "Moin Meister"));
+        messageTable.putItem(new Message(1, System.currentTimeMillis(), "Hans", "Servus"));
     }
 
     public void addChatItems() {
         LOG.info("Adding data for chats");
-        client.putItem(putChat("Hans", "Dieter", 1));
-        client.putItem(putChat("Hans", "Peter", 2));
-        client.putItem(putChat("Dieter", "Peter", 3));
+        chatTable.putItem(new Chat("Hans", "Dieter", 1));
+        chatTable.putItem(new Chat("Hans", "Peter", 2));
+        chatTable.putItem(new Chat("Dieter", "Peter", 3));
     }
 
-    private QueryRequest queryUsername(String username, String keyName) {
-        QueryRequest.Builder builder = QueryRequest.builder()
-                .tableName(CHATS_TABLE);
-        if (MEMBER_2_KEY.equals(keyName)) {
-            builder = builder.indexName(CHATS_REVERSED_INDEX);
-        }
-        return builder.keyConditionExpression(keyName + "= :user")
-                .expressionAttributeValues(Map.of(":user", AttributeValue.builder().s(username).build()))
+    private QueryEnhancedRequest queryUsername(String username) {
+        return QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                        .partitionValue(username)
+                        .build()))
                 .build();
     }
 
-    private QueryRequest queryMessages(int chatId) {
-        return QueryRequest.builder()
-                .tableName(MESSAGE_TABLE)
-                .keyConditionExpression(CHAT_ID_KEY + "= :cId")
-                .expressionAttributeValues(Map.of(":cId", AttributeValue.builder().n(String.valueOf(chatId)).build()))
+    private QueryEnhancedRequest queryMessages(int chatId) {
+        return QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                        .partitionValue(chatId)
+                        .build()))
                 .build();
     }
-
-    private PutItemRequest putChat(String member1, String member2, int chatId) {
-        return PutItemRequest.builder()
-                .tableName(CHATS_TABLE)
-                .item(Map.of(MEMBER_1_KEY, AttributeValue.builder().s(member1).build(),
-                        MEMBER_2_KEY, AttributeValue.builder().s(member2).build(),
-                        CHAT_ID_KEY, AttributeValue.builder().n(String.valueOf(chatId)).build()))
-                .build();
-    }
-
-    private PutItemRequest putMessage(int chatId, long timestamp, String sender, String message) {
-        return PutItemRequest.builder()
-                .tableName(MESSAGE_TABLE)
-                .item(Map.of(
-                        CHAT_ID_KEY, AttributeValue.builder().n(String.valueOf(chatId)).build(),
-                        TIMESTAMP_KEY, AttributeValue.builder().n(String.valueOf(timestamp)).build(),
-                        SENDER_KEY, AttributeValue.builder().s(sender).build(),
-                        MESSAGE_KEY, AttributeValue.builder().s(message).build()))
-                .build();
-    }
-
-    private List<UserChat> processChatResults(List<Map<String, AttributeValue>> chatResult, String partnerKey) {
-        return chatResult.stream()
-                .map(chatData -> {
-                    String partner = chatData.get(partnerKey).s();
-                    int chatId = Integer.parseInt(chatData.get(CHAT_ID_KEY).n());
-                    return new UserChat(chatId, partner);
-                })
-                .collect(Collectors.toList());
-    }
-
-    private List<Message> processMessageResults(List<Map<String, AttributeValue>> messagesResult) {
-        return messagesResult.stream()
-                .map(messageData -> {
-                    String message = messageData.get(MESSAGE_KEY).s();
-                    String sender = messageData.get(SENDER_KEY).s();
-                    long timestamp = Long.parseLong(messageData.get(TIMESTAMP_KEY).n());
-                    return new Message(sender, message, timestamp);
-                })
-                .collect(Collectors.toList());
-    }
-
 
 }

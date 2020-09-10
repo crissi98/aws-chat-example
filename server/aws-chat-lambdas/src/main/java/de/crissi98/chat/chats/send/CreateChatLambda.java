@@ -3,7 +3,6 @@ package de.crissi98.chat.chats.send;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import de.crissi98.chat.dynamo.DatabaseService;
-import de.crissi98.chat.model.NewChatRequest;
 
 import javax.inject.Inject;
 import javax.inject.Named;

@@ -1,4 +1,4 @@
-package de.crissi98.chat.model;
+package de.crissi98.chat.messages.send;
 
 
 public class NewMessageRequest {

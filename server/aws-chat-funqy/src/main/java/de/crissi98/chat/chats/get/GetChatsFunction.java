@@ -12,7 +12,7 @@ public class GetChatsFunction {
     @Inject
     DatabaseService service;
 
-    @Funq("QuarkusChatListChatsFunction")
+    @Funq("QuarkusChatListChats")
     public List<UserChat> handleRequest(GetChatsRequest getChatsRequest) {
         return service.getChatsForUser(getChatsRequest.getUsername());
     }
