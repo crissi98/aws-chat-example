@@ -13,6 +13,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Random;
 
@@ -22,8 +23,8 @@ public class ChatResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatResource.class);
 
-//    @Inject
-//    DatabaseService service;
+    @Inject
+    DatabaseService service;
 
     Random random = new Random();
 
@@ -31,23 +32,16 @@ public class ChatResource {
     @Path("/username/{user}")
     public List<UserChat> getChatsForUser(@PathParam("user") String username) {
         LOG.info("Get chats for user {}", username);
-//        return service.getChatsForUser(username);
-        return List.of();
-    }
-
-    @GET
-    @Path("/add")
-    public void addTestData() {
-//        service.addChatItems();
-        LOG.info("Test-items added for chats");
+        return service.getChatsForUser(username);
     }
 
     @POST
     @Path("/newChat")
-    public void newChat(NewChatRequest chatRequest) {
+    public Response newChat(NewChatRequest chatRequest) {
         int generatedChatId = random.nextInt();
-//        LOG.info("Adding new chat {} with id {}", chatRequest, generatedChatId);
-//        service.createNewChat(chatRequest, generatedChatId);
+        LOG.info("Adding new chat {} with id {}", chatRequest, generatedChatId);
+        service.createNewChat(chatRequest, generatedChatId);
+        return Response.noContent().build();
     }
 
 

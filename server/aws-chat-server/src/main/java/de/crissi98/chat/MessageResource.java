@@ -13,6 +13,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/messages")
@@ -31,18 +32,12 @@ public class MessageResource {
         return service.getMessagesForChatId(chatId);
     }
 
-    @GET
-    @Path("/add")
-    public void addMessages() {
-        service.addMessageItems();
-        LOG.info("Test-items added for messages");
-    }
-
     @POST
     @Path("/sendMessage")
-    public void addMessageToChat(NewMessageRequest messageRequest) {
+    public Response addMessageToChat(NewMessageRequest messageRequest) {
         service.addMessageToChat(messageRequest, System.currentTimeMillis());
         LOG.info("Added message {}", messageRequest);
+        return Response.noContent().build();
     }
 
 }
