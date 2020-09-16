@@ -1,0 +1,88 @@
+---
+openapi: 3.0.3
+info:
+  title: Generated API
+  version: "1.0"
+paths:
+  /chats/newChat:
+    post:
+      responses:
+        "200":
+          description: OK
+  /chats/username/{user}:
+    get:
+      parameters:
+        - name: user
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUserChat'
+  /messages/chatId/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            format: int32
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMessage'
+  /messages/sendMessage:
+    post:
+      responses:
+        "200":
+          description: OK
+  /users/list:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListString'
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+        sender:
+          type: string
+        timestamp:
+          format: int64
+          type: integer
+    ListMessage:
+      type: array
+      items:
+        $ref: '#/components/schemas/Message'
+    UserChat:
+      type: object
+      properties:
+        id:
+          format: int32
+          type: integer
+        partner:
+          type: string
+    ListUserChat:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserChat'
+    ListString:
+      type: array
+      items:
+        type: string
